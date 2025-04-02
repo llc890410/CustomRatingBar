@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CustomRatingBar">
+        <attr name="starCount" format="integer" />
+        <attr name="rating" format="float" />
+        <attr name="isIndicator" format="boolean" />
+        <attr name="starSpacing" format="dimension" />
+        <attr name="starSize" format="dimension" />
+        <attr name="emptyStarDrawable" format="reference" />
+        <attr name="filledStarDrawable" format="reference" />
+        <attr name="halfStarDrawable" format="reference" />
+    </declare-styleable>
+</resources> 
