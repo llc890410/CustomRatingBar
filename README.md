@@ -32,7 +32,6 @@
     app:starCount="5"
     app:rating="3.5"
     app:isIndicator="false"
-    app:starSize="24dp"
     app:starSpacing="4dp" />
 
 <!-- 自定義圖標用法 -->
@@ -65,9 +64,6 @@ ratingBar.setIsIndicator(true)
 // 設置星星數量
 ratingBar.setStarCount(7)
 
-// 設置星星大小 (單位：dp)
-ratingBar.setStarSize(32)
-
 // 設置星星間距 (單位：dp)
 ratingBar.setStarSpacing(8)
 
@@ -80,9 +76,8 @@ ratingBar.setStarDrawables(emptyIcon, filledIcon, halfIcon)
 
 ### 3. 自定義圖標保持原始大小
 
-當使用自定義圖標時，如果希望保持圖標的原始大小而不進行縮放，請確保：
+當使用自定義圖標時，圖標將會保持其原始大小：
 1. 使用 `android:layout_width="wrap_content"` 和 `android:layout_height="wrap_content"`
-2. 不要設置 `app:starSize` 屬性，或者將其設置為0
 
 ```xml
 <!-- 自定義圖標保持原始大小 -->
@@ -124,7 +119,6 @@ class YourActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
 | rating | 當前評分值 | 0.0 |
 | isIndicator | 是否為只讀模式 | false |
 | starSpacing | 星星間距 (dp) | 4dp |
-| starSize | 星星大小 (dp) | 24dp |
 | emptyStarDrawable | 空星圖標資源 | 內建圖標 |
 | filledStarDrawable | 滿星圖標資源 | 內建圖標 |
 | halfStarDrawable | 半星圖標資源 | 內建圖標 |
@@ -188,7 +182,6 @@ class YourActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
          <attr name="rating" format="float" />
          <attr name="isIndicator" format="boolean" />
          <attr name="starSpacing" format="dimension" />
-         <attr name="starSize" format="dimension" />
          <attr name="emptyStarDrawable" format="reference" />
          <attr name="filledStarDrawable" format="reference" />
          <attr name="halfStarDrawable" format="reference" />

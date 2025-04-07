@@ -5,7 +5,6 @@
         <attr name="rating" format="float" />
         <attr name="isIndicator" format="boolean" />
         <attr name="starSpacing" format="dimension" />
-        <attr name="starSize" format="dimension" />
         <attr name="emptyStarDrawable" format="reference" />
         <attr name="filledStarDrawable" format="reference" />
         <attr name="halfStarDrawable" format="reference" />

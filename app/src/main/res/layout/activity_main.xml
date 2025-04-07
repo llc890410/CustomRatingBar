@@ -105,40 +105,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="大號星星 (starSize=40dp)"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <com.example.customratingbar.CustomRatingBar
-            android:id="@+id/ratingBar3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:starCount="5"
-            app:rating="2.5"
-            app:starSize="40dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="小號星星 (starSize=16dp)"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <com.example.customratingbar.CustomRatingBar
-            android:id="@+id/ratingBar4"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:starCount="5"
-            app:rating="1"
-            app:starSize="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="較大間距 (starSpacing=16dp)"
             android:textSize="16sp"
             android:textStyle="bold"

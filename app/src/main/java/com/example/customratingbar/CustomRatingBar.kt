@@ -12,6 +12,8 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * 自定義評分條組件 (Custom Rating Bar)
@@ -35,7 +37,6 @@ import androidx.core.content.ContextCompat
  * - rating：當前評分值，範圍從 0 到 starCount
  * - isIndicator：是否為只讀模式，為 true 時使用者無法點擊修改評分
  * - starSpacing：星星之間的間距（單位：dp 或其他尺寸單位）
- * - starSize：星星的大小（單位：dp 或其他尺寸單位），設為 0 則使用圖標原始大小
  * - emptyStarDrawable：自定義空星圖標資源引用
  * - filledStarDrawable：自定義滿星圖標資源引用
  * - halfStarDrawable：自定義半星圖標資源引用
@@ -54,7 +55,6 @@ class CustomRatingBar @JvmOverloads constructor(
         private const val DEFAULT_RATING = 0.0f            // 預設評分
         private const val DEFAULT_IS_INDICATOR = false     // 預設是否為只讀模式
         private const val DEFAULT_STAR_SPACING_DP = 4      // 預設星星間距（dp）
-        private const val DEFAULT_STAR_SIZE_DP = 24        // 預設星星大小（dp）
     }
 
     // 基本屬性
@@ -62,7 +62,6 @@ class CustomRatingBar @JvmOverloads constructor(
     private var rating: Float = DEFAULT_RATING
     private var isIndicator: Boolean = DEFAULT_IS_INDICATOR
     private var starSpacing: Int = dpToPx(DEFAULT_STAR_SPACING_DP)
-    private var starSize: Int = dpToPx(DEFAULT_STAR_SIZE_DP)
 
     // 評分變更監聽器
     private var onRatingChangeListener: OnRatingChangeListener? = null
@@ -119,14 +118,6 @@ class CustomRatingBar @JvmOverloads constructor(
                 val filledDrawableResId = typedArray.getResourceId(R.styleable.CustomRatingBar_filledStarDrawable, 0)
                 val halfDrawableResId = typedArray.getResourceId(R.styleable.CustomRatingBar_halfStarDrawable, 0)
                 
-                // 檢查是否有從XML設置starSize的值
-                val hasCustomStarSize = typedArray.hasValue(R.styleable.CustomRatingBar_starSize)
-                
-                // 如果設置了自定義starSize，則使用該值
-                if (hasCustomStarSize) {
-                    starSize = typedArray.getDimensionPixelSize(R.styleable.CustomRatingBar_starSize, starSize)
-                }
-                
                 // 讀取間距值
                 starSpacing = typedArray.getDimensionPixelSize(R.styleable.CustomRatingBar_starSpacing, starSpacing)
                 
@@ -139,16 +130,6 @@ class CustomRatingBar @JvmOverloads constructor(
                 }
                 if (halfDrawableResId != 0) {
                     customHalfDrawable = ContextCompat.getDrawable(context, halfDrawableResId)
-                }
-                
-                // 如果設置了自定義圖標但沒有設置自定義starSize，則從圖標獲取大小
-                if (!hasCustomStarSize && (customEmptyDrawable != null || customFilledDrawable != null || customHalfDrawable != null)) {
-                    // 使用第一個可用的drawable來設置大小
-                    when {
-                        customEmptyDrawable != null -> updateStarSizeFromDrawable(customEmptyDrawable!!)
-                        customFilledDrawable != null -> updateStarSizeFromDrawable(customFilledDrawable!!)
-                        customHalfDrawable != null -> updateStarSizeFromDrawable(customHalfDrawable!!)
-                    }
                 }
             } finally {
                 typedArray.recycle()   // 釋放 TypedArray 資源
@@ -167,8 +148,8 @@ class CustomRatingBar @JvmOverloads constructor(
 
         // 建立每顆星星
         for (i in 0 until starCount) {
-            // 預先創建佈局參數
-            val params = LayoutParams(starSize, starSize).apply {
+            // 預先創建佈局參數 - 使用WRAP_CONTENT
+            val params = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply {
                 if (i < starCount - 1) {
                     marginEnd = starSpacing  // 設置除了最後一顆外的星星右邊距
                 }
@@ -309,19 +290,6 @@ class CustomRatingBar @JvmOverloads constructor(
     }
 
     /**
-     * 設置星星大小
-     * 
-     * @param sizeDp 星星大小，單位 dp
-     */
-    fun setStarSize(sizeDp: Int) {
-        val sizePx = dpToPx(sizeDp)
-        if (starSize != sizePx) {  // 只在大小變化時更新
-            starSize = sizePx
-            setupStars()  // 重新設置星星
-        }
-    }
-
-    /**
      * 設置評分變更監聽器
      * 
      * @param listener 評分變更監聽器
@@ -395,23 +363,34 @@ class CustomRatingBar @JvmOverloads constructor(
             val availableWidth = width - totalPadding - totalSpacing
             
             // 計算每顆星星的新大小，確保至少為1像素
-            val newStarSize = (availableWidth / starCount).coerceAtLeast(1)
+            val starSize = (availableWidth / starCount).coerceAtLeast(1)
             
-            // 如果星星大小需要調整
-            if (newStarSize != starSize) {
-                // 更新每顆星星的大小，重用已有的LayoutParams物件
-                for (i in 0 until starCount) {
-                    // 獲取LayoutParams並更新其屬性
-                    val layoutParams = starLayoutParams[i]
-                    layoutParams.width = newStarSize
-                    layoutParams.height = newStarSize
-                    // 間距保持不變
-                    starViews[i].layoutParams = layoutParams
-                }
+            // 更新每顆星星的大小，重用已有的LayoutParams物件
+            for (i in 0 until starCount) {
+                // 獲取LayoutParams並更新其屬性
+                val layoutParams = starLayoutParams[i]
+                layoutParams.width = starSize
+                layoutParams.height = starSize
+                // 間距保持不變
+                starViews[i].layoutParams = layoutParams
             }
         } else if (mode == MeasureSpec.AT_MOST) {
             // 在AT_MOST模式下（wrap_content），計算整個視圖所需的總寬度
-            val totalWidth = paddingLeft + paddingRight + (starCount * starSize) + ((starCount - 1) * starSpacing)
+            var totalWidth = paddingLeft + paddingRight
+            
+            // 測量每個星星的實際大小
+            var measuredStarWidth = 0
+            for (i in 0 until min(starCount, starViews.size)) {
+                val starView = starViews[i]
+                // 測量星星的寬度
+                starView.measure(
+                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+                    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+                )
+                measuredStarWidth = max(measuredStarWidth, starView.measuredWidth)
+            }
+            
+            totalWidth += (starCount * measuredStarWidth) + ((starCount - 1) * starSpacing)
             
             // 確保不超過可用的最大寬度
             val finalWidth = totalWidth.coerceAtMost(width)
@@ -428,13 +407,8 @@ class CustomRatingBar @JvmOverloads constructor(
      */
     fun setEmptyStarDrawable(drawable: Drawable?) {
         customEmptyDrawable = drawable
-        // 如果設置了新的drawable且未手動設置starSize，則根據drawable大小更新starSize
-        drawable?.let {
-            if (customEmptyDrawable != null && customFilledDrawable == null && customHalfDrawable == null) {
-                updateStarSizeFromDrawable(it)
-            }
-        }
         updateStars()
+        requestLayout()
     }
 
     /**
@@ -444,13 +418,8 @@ class CustomRatingBar @JvmOverloads constructor(
      */
     fun setFilledStarDrawable(drawable: Drawable?) {
         customFilledDrawable = drawable
-        // 如果設置了新的drawable且未手動設置starSize，則根據drawable大小更新starSize
-        drawable?.let {
-            if (customEmptyDrawable == null && customFilledDrawable != null && customHalfDrawable == null) {
-                updateStarSizeFromDrawable(it)
-            }
-        }
         updateStars()
+        requestLayout()
     }
 
     /**
@@ -460,13 +429,8 @@ class CustomRatingBar @JvmOverloads constructor(
      */
     fun setHalfStarDrawable(drawable: Drawable?) {
         customHalfDrawable = drawable
-        // 如果設置了新的drawable且未手動設置starSize，則根據drawable大小更新starSize
-        drawable?.let {
-            if (customEmptyDrawable == null && customFilledDrawable == null && customHalfDrawable != null) {
-                updateStarSizeFromDrawable(it)
-            }
-        }
         updateStars()
+        requestLayout()
     }
 
     /**
@@ -480,34 +444,10 @@ class CustomRatingBar @JvmOverloads constructor(
         customEmptyDrawable = emptyDrawable
         customFilledDrawable = filledDrawable
         customHalfDrawable = halfDrawable
-        
-        // 使用第一個非空的drawable來更新starSize
-        when {
-            emptyDrawable != null -> updateStarSizeFromDrawable(emptyDrawable)
-            filledDrawable != null -> updateStarSizeFromDrawable(filledDrawable)
-            halfDrawable != null -> updateStarSizeFromDrawable(halfDrawable)
-        }
-        
         updateStars()
+        requestLayout()
     }
     
-    /**
-     * 從drawable獲取大小並更新starSize
-     */
-    private fun updateStarSizeFromDrawable(drawable: Drawable) {
-        val drawableWidth = drawable.intrinsicWidth
-        val drawableHeight = drawable.intrinsicHeight
-        
-        // 使用drawable的實際大小作為starSize（取寬高的最大值）
-        if (drawableWidth > 0 && drawableHeight > 0) {
-            val newSize = maxOf(drawableWidth, drawableHeight)
-            if (starSize != newSize) {
-                starSize = newSize
-                setupStars()
-            }
-        }
-    }
-
     /**
      * 保存視圖狀態
      */
@@ -523,7 +463,6 @@ class CustomRatingBar @JvmOverloads constructor(
         savedState.starCount = starCount
         savedState.isIndicator = isIndicator
         savedState.starSpacing = starSpacing
-        savedState.starSize = starSize
         
         return savedState
     }
@@ -539,7 +478,6 @@ class CustomRatingBar @JvmOverloads constructor(
             starCount = state.starCount
             isIndicator = state.isIndicator
             starSpacing = state.starSpacing
-            starSize = state.starSize
             
             // 重新設置星星並更新顯示
             setupStars()
@@ -558,7 +496,6 @@ class CustomRatingBar @JvmOverloads constructor(
         var starCount: Int = 0
         var isIndicator: Boolean = false
         var starSpacing: Int = 0
-        var starSize: Int = 0
         
         constructor(superState: Parcelable) : super(superState)
         
@@ -567,7 +504,6 @@ class CustomRatingBar @JvmOverloads constructor(
             starCount = parcel.readInt()
             isIndicator = parcel.readInt() == 1
             starSpacing = parcel.readInt()
-            starSize = parcel.readInt()
         }
         
         override fun writeToParcel(out: Parcel, flags: Int) {
@@ -576,7 +512,6 @@ class CustomRatingBar @JvmOverloads constructor(
             out.writeInt(starCount)
             out.writeInt(if (isIndicator) 1 else 0)
             out.writeInt(starSpacing)
-            out.writeInt(starSize)
         }
         
         companion object {
