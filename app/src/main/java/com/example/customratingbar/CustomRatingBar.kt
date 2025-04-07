@@ -35,7 +35,7 @@ import kotlin.math.min
  *
  * XML 屬性說明：
  * - starCount：星星數量，預設為 5
- * - rating：當前評分值，範圍從 0 到 starCount
+ * - rating：當前評分值，範圍從 0 到 starCount，負數會被視為 0
  * - isIndicator：是否為只讀模式，為 true 時使用者無法點擊修改評分
  * - starSpacing：星星之間的間距（單位：dp 或其他尺寸單位）
  * - emptyStarDrawable：自定義空星圖標資源引用
@@ -116,11 +116,7 @@ class CustomRatingBar @JvmOverloads constructor(
                 starCount = typedArray.getInteger(R.styleable.CustomRatingBar_starCount, DEFAULT_STAR_COUNT)
                 rating = typedArray.getFloat(R.styleable.CustomRatingBar_rating, DEFAULT_RATING)
                 isIndicator = typedArray.getBoolean(R.styleable.CustomRatingBar_isIndicator, DEFAULT_IS_INDICATOR)
-                // 讀取半星屬性
-                val halfStarIndex = typedArray.getIndex(R.styleable.CustomRatingBar_allowHalfStar)
-                if (halfStarIndex >= 0) {
-                    allowHalfStar = typedArray.getBoolean(halfStarIndex, DEFAULT_ALLOW_HALF_STAR)
-                }
+                allowHalfStar = typedArray.getBoolean(R.styleable.CustomRatingBar_allowHalfStar, DEFAULT_ALLOW_HALF_STAR)
                 
                 // 讀取自定義圖標
                 val emptyDrawableResId = typedArray.getResourceId(R.styleable.CustomRatingBar_emptyStarDrawable, 0)
@@ -186,12 +182,22 @@ class CustomRatingBar @JvmOverloads constructor(
      * 根據當前評分值設置每顆星星是滿星、半星還是空星
      */
     private fun updateStars() {
-        val fullStars = rating.toInt()  // 滿星數量
-        val hasHalfStar = allowHalfStar && (rating - fullStars >= 0.5f)  // 是否有半星
+        // 安全檢查：確保評分在有效範圍內
+        val safeRating = rating.coerceIn(0f, starCount.toFloat())
+        
+        val fullStars = safeRating.toInt()  // 滿星數量
+        val hasHalfStar = allowHalfStar && (safeRating - fullStars >= 0.5f)  // 是否有半星
+        
+        // 安全檢查：確保 starViews 已初始化且大小足夠
+        if (starViews.isEmpty() || starViews.size < starCount) {
+            setupStars()  // 如果星星視圖未正確初始化，重新初始化
+            return
+        }
 
         // 為每顆星星設置相應的圖標
         for (i in 0 until starCount) {
-            val starView = starViews[i]
+            val starView = starViews.getOrNull(i) ?: continue  // 安全獲取索引，避免越界
+            
             when {
                 i < fullStars -> {
                     val drawable = customFilledDrawable ?: starFilledDrawable
@@ -234,6 +240,7 @@ class CustomRatingBar @JvmOverloads constructor(
      * @param rating 評分值，範圍從 0 到 starCount
      */
     fun setRating(rating: Float) {
+        // 確保評分不小於 0，負數評分會被視為 0
         var newRating = rating.coerceIn(0f, starCount.toFloat())  // 限制評分範圍
         
         // 如果不允許半星，則將評分四捨五入到最近的整數

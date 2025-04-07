@@ -55,8 +55,9 @@
 // 獲取評分條引用
 val ratingBar = findViewById<CustomRatingBar>(R.id.ratingBar)
 
-// 設置評分值
+// 設置評分值 (負數會被視為0)
 ratingBar.setRating(4.5f)
+ratingBar.setRating(-1f)  // 會被視為 0，顯示為空星
 
 // 獲取當前評分
 val currentRating = ratingBar.getRating()
@@ -122,12 +123,24 @@ class YourActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
 }
 ```
 
+### 5. 安全評分處理
+
+CustomRatingBar 會對異常評分值進行安全處理：
+
+```kotlin
+// 負數評分會被視為0
+ratingBar.setRating(-2.5f)  // 實際評分會被設為 0，所有星星顯示為空星
+
+// 超過星星數量的評分會被限制為星星數量
+ratingBar.setRating(10f)    // 如果只有5顆星，實際評分會被設為 5.0
+```
+
 ## 自定義屬性
 
 | 屬性 | 描述 | 預設值 |
 |------|------|-------|
 | starCount | 星星數量 | 5 |
-| rating | 當前評分值 | 0.0 |
+| rating | 當前評分值 (負數會被視為0) | 0.0 |
 | isIndicator | 是否為只讀模式 | false |
 | starSpacing | 星星間距 (dp) | 4dp |
 | emptyStarDrawable | 空星圖標資源 | 內建圖標 |
@@ -202,6 +215,20 @@ ratingBar.setAllowHalfStar(false)
 
 // 檢查當前是否支持半星
 val supportsHalfStar = ratingBar.isAllowHalfStar()
+```
+
+### 案例6：處理異常評分值
+CustomRatingBar 能夠安全地處理異常評分值：
+
+```kotlin
+// 設置有效評分
+ratingBar.setRating(3.5f)   // 正常顯示 3.5 星
+
+// 設置負數評分（會被視為0）
+ratingBar.setRating(-1.0f)  // 顯示為 0 星（全空星）
+
+// 設置超出範圍的評分（會被限制在有效範圍內）
+ratingBar.setRating(10.0f)  // 如果有5顆星，顯示為 5 星（全滿星）
 ```
 
 ## 導入到你的專案
