@@ -8,5 +8,6 @@
         <attr name="emptyStarDrawable" format="reference" />
         <attr name="filledStarDrawable" format="reference" />
         <attr name="halfStarDrawable" format="reference" />
+        <attr name="allowHalfStar" format="boolean" />
     </declare-styleable>
 </resources> 

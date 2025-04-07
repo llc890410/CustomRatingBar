@@ -23,6 +23,9 @@ class MainActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
     // 追蹤當前間距，用於調整按鈕
     private var currentSpacing = 8
     
+    // 追蹤半星模式狀態
+    private var halfStarEnabled = false
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -53,6 +56,9 @@ class MainActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
         // 設置星星間距示例
         binding.spacingRatingBar.setStarSpacing(20) // 20dp間距
         
+        // 初始化半星模式按鈕文本
+        updateHalfStarButtonText()
+        
         // 更新當前選擇的評分顯示
         updateSelectedRatingText(binding.ratingBar1.getRating())
     }
@@ -80,6 +86,24 @@ class MainActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
             binding.customIconsRatingBar.setStarSpacing(currentSpacing)
             Toast.makeText(this, "星星間距已減少到 ${currentSpacing}dp", Toast.LENGTH_SHORT).show()
         }
+        
+        // 設置半星模式切換按鈕
+        binding.toggleHalfStarButton.setOnClickListener {
+            halfStarEnabled = !halfStarEnabled
+            binding.ratingBar1.setAllowHalfStar(halfStarEnabled)
+            updateHalfStarButtonText()
+            
+            val message = if (halfStarEnabled) "半星模式已啟用" else "半星模式已禁用"
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * 更新半星切換按鈕文本
+     */
+    private fun updateHalfStarButtonText() {
+        val buttonText = if (halfStarEnabled) "禁用半星模式" else "啟用半星模式"
+        binding.toggleHalfStarButton.text = buttonText
     }
     
     /**

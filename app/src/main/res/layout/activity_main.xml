@@ -24,10 +24,17 @@
             android:id="@+id/ratingBar1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="8dp"
             app:starCount="5"
             app:rating="3.5"
             app:isIndicator="false" />
+            
+        <Button
+            android:id="@+id/toggleHalfStarButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:text="啟用半星模式" />
 
         <TextView
             android:layout_width="wrap_content"

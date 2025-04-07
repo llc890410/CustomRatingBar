@@ -55,6 +55,7 @@ class CustomRatingBar @JvmOverloads constructor(
         private const val DEFAULT_RATING = 0.0f            // 預設評分
         private const val DEFAULT_IS_INDICATOR = false     // 預設是否為只讀模式
         private const val DEFAULT_STAR_SPACING_DP = 4      // 預設星星間距（dp）
+        private const val DEFAULT_ALLOW_HALF_STAR = false   // 預設不允許半星
     }
 
     // 基本屬性
@@ -62,6 +63,7 @@ class CustomRatingBar @JvmOverloads constructor(
     private var rating: Float = DEFAULT_RATING
     private var isIndicator: Boolean = DEFAULT_IS_INDICATOR
     private var starSpacing: Int = dpToPx(DEFAULT_STAR_SPACING_DP)
+    private var allowHalfStar: Boolean = DEFAULT_ALLOW_HALF_STAR  // 是否允許半星評分
 
     // 評分變更監聽器
     private var onRatingChangeListener: OnRatingChangeListener? = null
@@ -112,6 +114,11 @@ class CustomRatingBar @JvmOverloads constructor(
                 starCount = typedArray.getInteger(R.styleable.CustomRatingBar_starCount, DEFAULT_STAR_COUNT)
                 rating = typedArray.getFloat(R.styleable.CustomRatingBar_rating, DEFAULT_RATING)
                 isIndicator = typedArray.getBoolean(R.styleable.CustomRatingBar_isIndicator, DEFAULT_IS_INDICATOR)
+                // 讀取半星屬性
+                val halfStarIndex = typedArray.getIndex(R.styleable.CustomRatingBar_allowHalfStar)
+                if (halfStarIndex >= 0) {
+                    allowHalfStar = typedArray.getBoolean(halfStarIndex, DEFAULT_ALLOW_HALF_STAR)
+                }
                 
                 // 讀取自定義圖標
                 val emptyDrawableResId = typedArray.getResourceId(R.styleable.CustomRatingBar_emptyStarDrawable, 0)
@@ -178,7 +185,7 @@ class CustomRatingBar @JvmOverloads constructor(
      */
     private fun updateStars() {
         val fullStars = rating.toInt()  // 滿星數量
-        val hasHalfStar = rating - fullStars >= 0.5f  // 是否有半星
+        val hasHalfStar = allowHalfStar && (rating - fullStars >= 0.5f)  // 是否有半星
 
         // 為每顆星星設置相應的圖標
         for (i in 0 until starCount) {
@@ -189,8 +196,15 @@ class CustomRatingBar @JvmOverloads constructor(
                     starView.setImageDrawable(drawable)  // 滿星
                 }
                 i == fullStars && hasHalfStar -> {
-                    val drawable = customHalfDrawable ?: starHalfDrawable
-                    starView.setImageDrawable(drawable)  // 半星
+                    // 如果自定義半星圖標和預設半星圖標都為空，則使用空星圖標
+                    val halfDrawable = customHalfDrawable ?: starHalfDrawable
+                    if (halfDrawable != null) {
+                        starView.setImageDrawable(halfDrawable)  // 半星
+                    } else {
+                        // 當半星圖標不可用時，退回到使用空星圖標
+                        val emptyDrawable = customEmptyDrawable ?: starEmptyDrawable
+                        starView.setImageDrawable(emptyDrawable)
+                    }
                 }
                 else -> {
                     val drawable = customEmptyDrawable ?: starEmptyDrawable
@@ -218,7 +232,17 @@ class CustomRatingBar @JvmOverloads constructor(
      * @param rating 評分值，範圍從 0 到 starCount
      */
     fun setRating(rating: Float) {
-        val newRating = rating.coerceIn(0f, starCount.toFloat())  // 限制評分範圍
+        var newRating = rating.coerceIn(0f, starCount.toFloat())  // 限制評分範圍
+        
+        // 如果不允許半星，則將評分四捨五入到最近的整數
+        if (!allowHalfStar) {
+            newRating = if (newRating - newRating.toInt() < 0.5f) {
+                newRating.toInt().toFloat()
+            } else {
+                (newRating.toInt() + 1).toFloat().coerceAtMost(starCount.toFloat())
+            }
+        }
+        
         if (this.rating != newRating) {  // 只在評分變化時更新
             this.rating = newRating
             updateStars()  // 更新星星狀態
@@ -268,13 +292,6 @@ class CustomRatingBar @JvmOverloads constructor(
             setupStars()  // 重新設置星星以更新點擊事件
         }
     }
-
-    /**
-     * 判斷是否為只讀模式
-     * 
-     * @return 是否為只讀模式
-     */
-    fun isIndicator(): Boolean = isIndicator
 
     /**
      * 設置星星間距
@@ -339,8 +356,6 @@ class CustomRatingBar @JvmOverloads constructor(
         
         // 只在EXACTLY模式下調整星星大小，AT_MOST（wrap_content）模式保持原始大小
         if (mode == MeasureSpec.EXACTLY && width > 0 && starCount > 0) {
-            // 確保不會發生除零錯誤
-            if (starCount <= 0) return
             
             // 計算總填充和間距
             val totalPadding = paddingLeft + paddingRight
@@ -447,6 +462,24 @@ class CustomRatingBar @JvmOverloads constructor(
         updateStars()
         requestLayout()
     }
+
+    /**
+     * 設置是否允許半星評分
+     *
+     * @param allow true 表示允許半星，false 表示僅允許整星
+     */
+    fun setAllowHalfStar(allow: Boolean) {
+        if (this.allowHalfStar != allow) {
+            this.allowHalfStar = allow
+
+            // 如果關閉半星功能，則需要將當前評分值四捨五入到最近的整數
+            if (!allow && rating != rating.toInt().toFloat()) {
+                setRating(rating)  // 透過 setRating 方法處理四捨五入邏輯
+            } else {
+                updateStars()  // 僅更新顯示
+            }
+        }
+    }
     
     /**
      * 保存視圖狀態
@@ -463,6 +496,7 @@ class CustomRatingBar @JvmOverloads constructor(
         savedState.starCount = starCount
         savedState.isIndicator = isIndicator
         savedState.starSpacing = starSpacing
+        savedState.allowHalfStar = allowHalfStar
         
         return savedState
     }
@@ -478,6 +512,7 @@ class CustomRatingBar @JvmOverloads constructor(
             starCount = state.starCount
             isIndicator = state.isIndicator
             starSpacing = state.starSpacing
+            allowHalfStar = state.allowHalfStar
             
             // 重新設置星星並更新顯示
             setupStars()
@@ -496,6 +531,7 @@ class CustomRatingBar @JvmOverloads constructor(
         var starCount: Int = 0
         var isIndicator: Boolean = false
         var starSpacing: Int = 0
+        var allowHalfStar: Boolean = false
         
         constructor(superState: Parcelable) : super(superState)
         
@@ -504,6 +540,7 @@ class CustomRatingBar @JvmOverloads constructor(
             starCount = parcel.readInt()
             isIndicator = parcel.readInt() == 1
             starSpacing = parcel.readInt()
+            allowHalfStar = parcel.readInt() == 1
         }
         
         override fun writeToParcel(out: Parcel, flags: Int) {
@@ -512,6 +549,7 @@ class CustomRatingBar @JvmOverloads constructor(
             out.writeInt(starCount)
             out.writeInt(if (isIndicator) 1 else 0)
             out.writeInt(starSpacing)
+            out.writeInt(if (allowHalfStar) 1 else 0)
         }
         
         companion object {
