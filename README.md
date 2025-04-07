@@ -10,6 +10,7 @@
 - 自適應佈局：支持padding、margin和各種佈局參數
 - 可自定義星星數量：預設為5顆星，但可通過XML或程式碼調整
 - 支持互動模式和只讀模式
+- 控制半星顯示：可啟用或禁用半星功能，禁用時評分會自動四捨五入到整數
 - 提供評分變更事件回調
 - 星星大小可調整，不會變形或壓縮比例
 - 在XML中可直接預覽樣式
@@ -32,7 +33,8 @@
     app:starCount="5"
     app:rating="3.5"
     app:isIndicator="false"
-    app:starSpacing="4dp" />
+    app:starSpacing="4dp"
+    app:allowHalfStar="false" />
 
 <!-- 自定義圖標用法 -->
 <com.example.customratingbar.CustomRatingBar
@@ -43,7 +45,8 @@
     app:rating="3.5"
     app:emptyStarDrawable="@drawable/ic_custom_empty"
     app:filledStarDrawable="@drawable/ic_custom_filled"
-    app:halfStarDrawable="@drawable/ic_custom_half" />
+    app:halfStarDrawable="@drawable/ic_custom_half"
+    app:allowHalfStar="true" />
 ```
 
 ### 2. 在程式碼中設置
@@ -67,6 +70,13 @@ ratingBar.setStarCount(7)
 // 設置星星間距 (單位：dp)
 ratingBar.setStarSpacing(8)
 
+// 啟用或禁用半星評分
+ratingBar.setAllowHalfStar(true) // 啟用半星
+ratingBar.setAllowHalfStar(false) // 禁用半星，評分會四捨五入到整數
+
+// 檢查是否允許半星
+val isHalfStarAllowed = ratingBar.isAllowHalfStar()
+
 // 設置自定義圖標
 val emptyIcon = ContextCompat.getDrawable(context, R.drawable.ic_custom_empty)
 val filledIcon = ContextCompat.getDrawable(context, R.drawable.ic_custom_filled)
@@ -86,7 +96,8 @@ ratingBar.setStarDrawables(emptyIcon, filledIcon, halfIcon)
     android:layout_height="wrap_content"
     app:emptyStarDrawable="@drawable/ic_custom_empty"
     app:filledStarDrawable="@drawable/ic_custom_filled"
-    app:halfStarDrawable="@drawable/ic_custom_half" />
+    app:halfStarDrawable="@drawable/ic_custom_half"
+    app:allowHalfStar="true" />
 ```
 
 ### 4. 監聽評分變化
@@ -122,6 +133,7 @@ class YourActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
 | emptyStarDrawable | 空星圖標資源 | 內建圖標 |
 | filledStarDrawable | 滿星圖標資源 | 內建圖標 |
 | halfStarDrawable | 半星圖標資源 | 內建圖標 |
+| allowHalfStar | 是否允許半星評分 | false |
 
 ## 常見使用案例
 
@@ -137,7 +149,8 @@ class YourActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
     app:starSpacing="8dp"
     app:emptyStarDrawable="@drawable/ic_custom_empty"
     app:filledStarDrawable="@drawable/ic_custom_filled"
-    app:halfStarDrawable="@drawable/ic_custom_half" />
+    app:halfStarDrawable="@drawable/ic_custom_half"
+    app:allowHalfStar="true" />
 ```
 
 ### 案例2：調整星星間距
@@ -163,6 +176,34 @@ class YourActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
     app:isIndicator="true" />
 ```
 
+### 案例4：禁用半星模式
+當需要整數評分，不希望顯示半星時：
+
+```xml
+<com.example.customratingbar.CustomRatingBar
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:rating="3.5"
+    app:allowHalfStar="false" />
+```
+
+### 案例5：動態切換半星模式
+在程式碼中動態切換是否支持半星：
+
+```kotlin
+// 切換評分條半星模式
+val ratingBar = findViewById<CustomRatingBar>(R.id.ratingBar)
+
+// 啟用半星
+ratingBar.setAllowHalfStar(true)
+
+// 禁用半星（評分會自動四捨五入）
+ratingBar.setAllowHalfStar(false)
+
+// 檢查當前是否支持半星
+val supportsHalfStar = ratingBar.isAllowHalfStar()
+```
+
 ## 導入到你的專案
 
 ### 方法：直接複製檔案
@@ -185,5 +226,6 @@ class YourActivity : AppCompatActivity(), CustomRatingBar.OnRatingChangeListener
          <attr name="emptyStarDrawable" format="reference" />
          <attr name="filledStarDrawable" format="reference" />
          <attr name="halfStarDrawable" format="reference" />
+         <attr name="allowHalfStar" format="boolean" />
      </declare-styleable>
      ```

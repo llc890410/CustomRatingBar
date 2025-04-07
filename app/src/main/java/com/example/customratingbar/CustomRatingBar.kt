@@ -28,6 +28,7 @@ import kotlin.math.min
  * - 自適應佈局：支持 padding、margin 和各種佈局參數
  * - 可調整星星數量：預設五顆星，但可自由設置任意數量
  * - 互動/只讀模式：可設置為使用者可互動或純展示模式
+ * - 控制半星顯示：可啟用或禁用半星功能，禁用時評分會自動四捨五入到整數
  * - 提供評分變更回調：方便監聽評分變化
  * - 狀態保存：在螢幕旋轉等配置變更時保持評分狀態
  * - 自適應寬度：當使用固定寬度時自動調整星星大小
@@ -40,6 +41,7 @@ import kotlin.math.min
  * - emptyStarDrawable：自定義空星圖標資源引用
  * - filledStarDrawable：自定義滿星圖標資源引用
  * - halfStarDrawable：自定義半星圖標資源引用
+ * - allowHalfStar：是否允許半星評分，預設為 false，設為 false 時評分會四捨五入到整數
  */
 class CustomRatingBar @JvmOverloads constructor(
     context: Context,
@@ -314,6 +316,20 @@ class CustomRatingBar @JvmOverloads constructor(
     fun setOnRatingChangeListener(listener: OnRatingChangeListener) {
         onRatingChangeListener = listener
     }
+
+    /**
+     * 判斷是否為只讀模式
+     * 
+     * @return 是否為只讀模式
+     */
+    fun isIndicator(): Boolean = isIndicator
+
+    /**
+     * 獲取是否允許半星評分
+     * 
+     * @return 是否允許半星
+     */
+    fun isAllowHalfStar(): Boolean = allowHalfStar
 
     /**
      * 將 dp 轉換為 px
