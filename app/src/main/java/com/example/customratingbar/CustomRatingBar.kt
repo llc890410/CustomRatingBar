@@ -139,6 +139,9 @@ class CustomRatingBar @JvmOverloads constructor(
             } finally {
                 typedArray.recycle()   // 釋放 TypedArray 資源
             }
+            
+            // 使用setRating方法處理評分值，確保應用四捨五入邏輯
+            setRating(rating)
         }
     }
 
