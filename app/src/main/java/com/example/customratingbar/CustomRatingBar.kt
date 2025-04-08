@@ -28,7 +28,7 @@ import kotlin.math.min
  * - 自適應佈局：支持 padding、margin 和各種佈局參數
  * - 可調整星星數量：預設五顆星，但可自由設置任意數量
  * - 互動/只讀模式：可設置為使用者可互動或純展示模式
- * - 控制半星顯示：可啟用或禁用半星功能，禁用時評分會自動四捨五入到整數
+ * - 控制半星顯示：可啟用或禁用半星功能，啟用時使用自定義閾值顯示半星，禁用時評分會自動四捨五入到整數
  * - 提供評分變更回調：方便監聽評分變化
  * - 狀態保存：在螢幕旋轉等配置變更時保持評分狀態
  * - 自適應寬度：當使用固定寬度時自動調整星星大小
@@ -41,7 +41,10 @@ import kotlin.math.min
  * - emptyStarDrawable：自定義空星圖標資源引用
  * - filledStarDrawable：自定義滿星圖標資源引用
  * - halfStarDrawable：自定義半星圖標資源引用
- * - allowHalfStar：是否允許半星評分，預設為 false，設為 false 時評分會四捨五入到整數
+ * - allowHalfStar：是否允許半星評分，預設為 false，設為 false 時評分會四捨五入到整數，設為 true 時使用以下規則：
+ *   - X.0~X.25：顯示為 X 顆星
+ *   - X.25~X.75：顯示為 X.5 顆星（半星）
+ *   - X.75~(X+1).0：顯示為 X+1 顆星
  */
 class CustomRatingBar @JvmOverloads constructor(
     context: Context,
@@ -183,13 +186,23 @@ class CustomRatingBar @JvmOverloads constructor(
     /**
      * 更新所有星星的顯示狀態
      * 根據當前評分值設置每顆星星是滿星、半星還是空星
+     * 使用以下規則：
+     * - 小數部分 < 0.25：顯示為整星
+     * - 小數部分 0.25~0.75：顯示為半星
+     * - 小數部分 > 0.75：進位為下一顆整星
      */
     private fun updateStars() {
         // 安全檢查：確保評分在有效範圍內
         val safeRating = rating.coerceIn(0f, starCount.toFloat())
         
         val fullStars = safeRating.toInt()  // 滿星數量
-        val hasHalfStar = allowHalfStar && (safeRating - fullStars >= 0.5f)  // 是否有半星
+        val decimal = safeRating - fullStars  // 小數部分
+        
+        // 修改半星判斷邏輯：0.25~0.75 顯示半星，<0.25 顯示整星，>0.75 進位到下一個整星
+        val hasHalfStar = allowHalfStar && (decimal >= 0.25f && decimal < 0.75f)
+        
+        // 處理>0.75需要進位到下一個整星的情況
+        val effectiveFullStars = if (decimal >= 0.75f) fullStars + 1 else fullStars
         
         // 安全檢查：確保 starViews 已初始化且大小足夠
         if (starViews.isEmpty() || starViews.size < starCount) {
@@ -202,7 +215,7 @@ class CustomRatingBar @JvmOverloads constructor(
             val starView = starViews.getOrNull(i) ?: continue  // 安全獲取索引，避免越界
             
             when {
-                i < fullStars -> {
+                i < effectiveFullStars -> {
                     val drawable = customFilledDrawable ?: starFilledDrawable
                     starView.setImageDrawable(drawable)  // 滿星
                 }
@@ -239,8 +252,12 @@ class CustomRatingBar @JvmOverloads constructor(
 
     /**
      * 設置評分值
-     * 
+     *
      * @param rating 評分值，範圍從 0 到 starCount
+     * 如果允許半星，會根據以下規則顯示：
+     * - 小數部分 < 0.25：顯示為整星
+     * - 小數部分 0.25~0.75：顯示為半星
+     * - 小數部分 > 0.75：進位為下一顆整星
      */
     fun setRating(rating: Float) {
         // 確保評分不小於 0，負數評分會被視為 0
